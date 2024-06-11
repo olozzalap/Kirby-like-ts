@@ -158,13 +158,6 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
   });
 
   player.onUpdate(() => {
-    if ((Math.random() * 100) > 99) {
-      console.warn(`
-        X: `, player.pos.x, `
-        Y: `, player.pos.y, `
-      `)
-    }
-
     if (player.pos.y > 2000) {
       console.warn(`
 

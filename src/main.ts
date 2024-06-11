@@ -74,9 +74,30 @@ async function gameSetup() {
     setControls(k, kirb);
     k.add(kirb);
     k.camScale(0.6, 0.6);
+
+    console.warn(`
+
+    level1 scene
+      level1Layout: `, level1Layout, `
+      kirb: `, kirb, `
+
+    `)
+    const loggingUpdateCountInterval = 64;
+    let updateCount = 0;
+
     k.onUpdate(() => {
-      if (kirb.pos.x < level1Layout.pos.x + 432)
-        k.camPos(kirb.pos.x + 500, 800);
+      updateCount++;
+      if (updateCount === loggingUpdateCountInterval) {
+        updateCount = 0;
+        console.warn(`
+
+          kirb.pos.x: `, kirb.pos.x, `
+          level1Layout.pos.x: `, level1Layout.pos.x, `
+
+        `)
+      }
+      if (kirb.pos.x < level1Layout.pos.x + 1000)
+        k.camPos(kirb.pos.x + 200, 800);
     });
 
     for (const flame of level1SpawnPoints.flame) {
@@ -121,8 +142,8 @@ async function gameSetup() {
     k.add(kirb);
     k.camScale(k.vec2(0.7));
     k.onUpdate(() => {
-      if (kirb.pos.x < level2Layout.pos.x + 2100)
-        k.camPos(kirb.pos.x + 500, 800);
+      if (kirb.pos.x < level2Layout.pos.x + 3100)
+        k.camPos(kirb.pos.x + 200, 800);
     });
 
     for (const flame of level2SpawnPoints.flame) {
