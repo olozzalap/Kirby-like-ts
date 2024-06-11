@@ -17,7 +17,8 @@ async function gameSetup() {
       kirbIdle: 0,
       kirbInhaling: 1,
       kirbFull: 2,
-      kirbInhaleEffect: { from: 3, to: 8, speed: 15, loop: true },
+      kirbInhaleEffect: { from: 3, to: 8, speed: 14, loop: true },
+      kirbExhaleEffect: { from: 10, to: 12, speed: 10, loop: true },
       shootingStar: 9,
       flame: { from: 36, to: 37, speed: 4, loop: true },
       guyIdle: 18,
@@ -25,10 +26,6 @@ async function gameSetup() {
       bird: { from: 27, to: 28, speed: 4, loop: true },
     },
   });
-  k.loadSprite("level-1", "./level-1.png");
-  k.loadSprite("level-2", "./level-2.png");
-
-  k.add([k.rect(k.width(), k.height()), k.color(0, 0, 0), k.fixed()]);
 
   const { map: level1Layout, spawnPoints: level1SpawnPoints } = await makeMap(
     k,
@@ -43,14 +40,30 @@ async function gameSetup() {
   k.scene("level-1", async () => {
     globalGameState.setCurrentScene("level-1");
     globalGameState.setNextScene("level-2");
-    k.setGravity(2100);
+    k.setGravity(1600);
     k.add([
       k.rect(k.width(), k.height()),
-      k.color(k.Color.fromHex("#f7d7db")),
+      k.color(k.Color.fromHex("#47e39f")),
       k.fixed(),
     ]);
 
     k.add(level1Layout);
+
+    k.add([
+        k.pos(100, 700),
+        k.color(255, 255, 255),
+        k.text("oh hi mAYRKAYAty@^^&!67"),
+        k.fixed(),
+    ])
+    k.add([
+        k.pos(700, 700),
+        k.color(255, 255, 255),
+        k.text("ohhi", {
+            size: 48, // 48 pixels tall
+            width: 320, // it'll wrap to next line when width exceeds this value
+            font: "sans-serif", // specify any font you loaded or browser built-in
+        }),
+    ])
 
     const kirb = makePlayer(
       k,
@@ -60,7 +73,7 @@ async function gameSetup() {
 
     setControls(k, kirb);
     k.add(kirb);
-    k.camScale(k.vec2(0.7));
+    k.camScale(0.6, 0.6);
     k.onUpdate(() => {
       if (kirb.pos.x < level1Layout.pos.x + 432)
         k.camPos(kirb.pos.x + 500, 800);

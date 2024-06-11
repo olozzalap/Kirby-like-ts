@@ -2,11 +2,12 @@ import { KaboomCtx } from "kaboom";
 import { scale } from "./constants";
 
 export async function makeMap(k: KaboomCtx, name: string) {
-  const mapData = await (await fetch(`./${name}.json`)).json();
+  const spawnPoints: { [key: string]: { x: number; y: number }[] } = {};
+  k.loadSprite(name, `./${name}.png`);
 
   const map = k.make([k.sprite(name), k.scale(scale), k.pos(0)]);
 
-  const spawnPoints: { [key: string]: { x: number; y: number }[] } = {};
+  const mapData = await (await fetch(`./${name}.json`)).json();
 
   for (const layer of mapData.layers) {
     if (layer.name === "colliders") {

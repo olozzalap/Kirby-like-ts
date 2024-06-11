@@ -29,6 +29,8 @@ type PlayerGameObj = GameObj<
     }
 >;
 
+const playerEnemyCollisionFramesHurtCount = 39;
+
 export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
   const player = k.make([
     k.sprite("assets", { anim: "kirbIdle" }),
@@ -37,19 +39,20 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
     k.pos(posX * scale, posY * scale),
     k.scale(scale),
     k.doubleJump(10),
-    k.health(3),
+    k.health(4),
     k.opacity(1),
     {
       speed: 300,
       direction: "right",
       isInhaling: false,
+      isExhaling: false,
       isFull: false,
     },
     "player",
   ]);
 
-  player.onCollide("enemy", async (enemy: GameObj) => {
-    if (player.isInhaling && enemy.isInhalable) {
+  const handlePlayerEnemyCollision = async (enemy: GameObj) => {
+    if (player.isInhaling && enemy.isHalable) {
       player.isInhaling = false;
       k.destroy(enemy);
       player.isFull = true;
@@ -77,7 +80,41 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
       (val) => (player.opacity = val),
       k.easings.linear
     );
+
+    console.warn(`
+
+    handlePlayerEnemyCollision player.hp() is now
+      player.hp(): `, player.hp(), `
+
+    `)
+  }
+
+  player.onCollide("enemy", async (enemy: GameObj) =>
+    await handlePlayerEnemyCollision(enemy)
+  );
+
+  let playerEnemyCollisionFramesCount = 0;
+
+  player.onCollideUpdate("enemy", async (enemy: GameObj) => {
+    playerEnemyCollisionFramesCount++;
+
+    if (playerEnemyCollisionFramesCount >= playerEnemyCollisionFramesHurtCount) {
+      console.warn(`
+
+      onCollideUpdate
+        playerEnemyCollisionFramesCount: `, playerEnemyCollisionFramesCount, `
+        player.hp(): `, player.hp(), `
+
+      `)
+      playerEnemyCollisionFramesCount = 0;
+      return await handlePlayerEnemyCollision(enemy);
+    }
   });
+
+  player.onCollideEnd("enemy", () => {
+    playerEnemyCollisionFramesCount = 0;
+  });
+
 
   player.onCollide("exit", () => {
     k.go(globalGameState.nextScene);
@@ -90,27 +127,52 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
     k.opacity(0),
     "inhaleEffect",
   ]);
-
-  const inhaleZone = player.add([
-    k.area({ shape: new k.Rect(k.vec2(0), 20, 4) }),
+  const exhaleEffect = k.add([
+    k.sprite("assets", { anim: "kirbExhaleEffect" }),
     k.pos(),
-    "inhaleZone",
+    k.scale(scale),
+    k.opacity(0),
+    "exhaleEffect",
   ]);
 
-  inhaleZone.onUpdate(() => {
+  const haleZone = player.add([
+    k.area({ shape: new k.Rect(k.vec2(0), 20, 4) }),
+    k.pos(),
+    "haleZone",
+  ]);
+
+  haleZone.onUpdate(() => {
     if (player.direction === "left") {
-      inhaleZone.pos = k.vec2(-14, 8);
+      haleZone.pos = k.vec2(-14, 8);
       inhaleEffect.pos = k.vec2(player.pos.x - 60, player.pos.y + 0);
       inhaleEffect.flipX = true;
+      exhaleEffect.pos = k.vec2(player.pos.x - 60, player.pos.y + 0);
+      exhaleEffect.flipX = true;
       return;
     }
-    inhaleZone.pos = k.vec2(14, 8);
+    haleZone.pos = k.vec2(14, 8);
     inhaleEffect.pos = k.vec2(player.pos.x + 60, player.pos.y + 0);
     inhaleEffect.flipX = false;
+    exhaleEffect.pos = k.vec2(player.pos.x + 60, player.pos.y + 0);
+    exhaleEffect.flipX = false;
   });
 
   player.onUpdate(() => {
+    if ((Math.random() * 100) > 99) {
+      console.warn(`
+        X: `, player.pos.x, `
+        Y: `, player.pos.y, `
+      `)
+    }
+
     if (player.pos.y > 2000) {
+      console.warn(`
+
+      Falling down
+        player: `, player, `
+        globalGameState: `, globalGameState, `
+
+      `)
       k.go(globalGameState.currentScene);
     }
   });
@@ -120,8 +182,20 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
 
 export function setControls(k: KaboomCtx, player: PlayerGameObj) {
   const inhaleEffectRef = k.get("inhaleEffect")[0];
+  const exhaleEffectRef = k.get("exhaleEffect")[0];
+
+  let jumpCount = 0;
 
   k.onKeyDown((key) => {
+    if (key === "space") {
+      if (jumpCount >= 10) {
+        jumpCount = 0;
+      } else {
+        player.jump();
+        jumpCount++;
+      }
+    }
+
     switch (key) {
       case "left":
         player.direction = "left";
@@ -134,6 +208,10 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
         player.move(player.speed, 0);
         break;
       case "z":
+        if (player.isExhaling) {
+          return;
+        }
+
         if (player.isFull) {
           player.play("kirbFull");
           inhaleEffectRef.opacity = 0;
@@ -144,18 +222,23 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
         player.play("kirbInhaling");
         inhaleEffectRef.opacity = 1;
         break;
-      default:
-    }
-  });
-  k.onKeyPress((key) => {
-    switch (key) {
       case "x":
-        player.doubleJump();
+        if (player.isInhaling) {
+          return;
+        }
+
+        player.isExhaling = true;
+        player.play("kirbInhaling");
+        exhaleEffectRef.opacity = 1;
         break;
       default:
     }
   });
   k.onKeyRelease((key) => {
+    if (key === "space") {
+      k.wait(60, () => jumpCount = 0);
+    }
+
     switch (key) {
       case "z":
         if (player.isFull) {
@@ -189,18 +272,21 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
         player.isInhaling = false;
         player.play("kirbIdle");
         break;
+      case "x":
+        exhaleEffectRef.opacity = 0;
+        player.isExhaling = false;
+        player.play("kirbIdle");
       default:
     }
   });
 }
 
-export function makeInhalable(k: KaboomCtx, enemy: GameObj) {
-  enemy.onCollide("inhaleZone", () => {
-    enemy.isInhalable = true;
+export function makeHalable(k: KaboomCtx, enemy: GameObj) {
+  enemy.onCollide("haleZone", () => {
+    enemy.isHalable = true;
   });
-
-  enemy.onCollideEnd("inhaleZone", () => {
-    enemy.isInhalable = false;
+  enemy.onCollideEnd("haleZone", () => {
+    enemy.isHalable = false;
   });
 
   enemy.onCollide("shootingStar", (shootingStar: GameObj) => {
@@ -210,12 +296,20 @@ export function makeInhalable(k: KaboomCtx, enemy: GameObj) {
 
   const playerRef = k.get("player")[0];
   enemy.onUpdate(() => {
-    if (playerRef.isInhaling && enemy.isInhalable) {
-      if (playerRef.direction === "right") {
-        enemy.move(-800, 0);
-        return;
+    if (enemy.isHalable) {
+      if (playerRef.isInhaling) {
+        if (playerRef.direction === "right") {
+          enemy.move(-800, 10);
+          return;
+        }
+        enemy.move(800, 10);
+      } else if (playerRef.isExhaling) {
+        if (playerRef.direction === "right") {
+          enemy.move(800, 1);
+          return;
+        }
+        enemy.move(-800, 1);
       }
-      enemy.move(800, 0);
     }
   });
 }
@@ -234,7 +328,7 @@ export function makeFlameEnemy(k: KaboomCtx, posX: number, posY: number) {
     "enemy",
   ]);
 
-  makeInhalable(k, flame);
+  makeHalable(k, flame);
 
   flame.onStateEnter("idle", async () => {
     await k.wait(1);
@@ -265,11 +359,11 @@ export function makeGuyEnemy(k: KaboomCtx, posX: number, posY: number) {
     }),
     k.body(),
     k.state("idle", ["idle", "left", "right", "jump"]),
-    { isInhalable: false, speed: 100 },
+    { isHalable: false, speed: 100 },
     "enemy",
   ]);
 
-  makeInhalable(k, guy);
+  makeHalable(k, guy);
 
   guy.onStateEnter("idle", async () => {
     await k.wait(1);
@@ -319,7 +413,7 @@ export function makeBirdEnemy(
     "enemy",
   ]);
 
-  makeInhalable(k, bird);
+  makeHalable(k, bird);
 
   return bird;
 }
