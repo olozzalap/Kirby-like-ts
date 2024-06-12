@@ -77,7 +77,7 @@ async function gameSetup() {
 
     console.warn(`
 
-    level1 scene
+    POST setControls level1 scene
       level1Layout: `, level1Layout, `
       kirb: `, kirb, `
 

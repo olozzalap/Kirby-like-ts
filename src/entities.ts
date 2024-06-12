@@ -181,11 +181,13 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
 
   let jumpCount = 0;
 
-  k.onKeyDown((key) => {
+  k.onKeyPress((key) => {
     if (key === "space") {
-      player.jump();
+      player.doubleJump();
     }
+  })
 
+  k.onKeyDown((key) => {
     switch (key) {
       case "left":
         player.direction = "left";
@@ -225,10 +227,6 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
     }
   });
   k.onKeyRelease((key) => {
-    if (key === "space") {
-      k.wait(60, () => jumpCount = 0);
-    }
-
     switch (key) {
       case "z":
         if (player.isFull) {
@@ -349,7 +347,6 @@ export function makeGuyEnemy(k: KaboomCtx, posX: number, posY: number) {
     k.pos(posX * scale, posY * scale),
     k.area({
       shape: new k.Rect(k.vec2(2, 3.9), 12, 12),
-      collisionIgnore: ["enemy"],
     }),
     k.body(),
     k.state("idle", ["idle", "left", "right", "jump"]),
