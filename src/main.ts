@@ -82,7 +82,7 @@ async function gameSetup() {
       kirb: `, kirb, `
 
     `)
-    const loggingUpdateCountInterval = 64;
+    const loggingUpdateCountInterval = 124;
     let updateCount = 0;
 
     k.onUpdate(() => {
@@ -91,13 +91,15 @@ async function gameSetup() {
         updateCount = 0;
         console.warn(`
 
-          kirb.pos.x: `, kirb.pos.x, `
-          level1Layout.pos.x: `, level1Layout.pos.x, `
+          kirb.pos.y: `, kirb.pos.y, `
+          level1Layout.pos: `, level1Layout.pos, `
+          level1Layout.width: `, level1Layout.width, `
 
         `)
       }
-      if (kirb.pos.x < level1Layout.pos.x + 1000)
-        k.camPos(kirb.pos.x + 200, 800);
+      if (kirb.pos.y < 750 || kirb.pos.x < 1000) {
+        k.camPos(kirb.pos.x + 200, (kirb.pos.y / 1.42) + 200);
+      }
     });
 
     for (const flame of level1SpawnPoints.flame) {

@@ -51,6 +51,8 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
     "player",
   ]);
 
+  console.warn(player)
+
   const handlePlayerEnemyCollision = async (enemy: GameObj) => {
     if (player.isInhaling && enemy.isHalable) {
       player.isInhaling = false;
@@ -181,12 +183,7 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
 
   k.onKeyDown((key) => {
     if (key === "space") {
-      if (jumpCount >= 10) {
-        jumpCount = 0;
-      } else {
-        player.jump();
-        jumpCount++;
-      }
+      player.jump();
     }
 
     switch (key) {
@@ -324,12 +321,16 @@ export function makeFlameEnemy(k: KaboomCtx, posX: number, posY: number) {
   makeHalable(k, flame);
 
   flame.onStateEnter("idle", async () => {
-    await k.wait(1);
+    await k.wait(
+      Math.max(.56, (Math.random() * 2.45))
+    );
     flame.enterState("jump");
   });
 
   flame.onStateEnter("jump", async () => {
-    flame.jump(1000);
+    flame.jump(
+      Math.max(377, (Math.random() * 1288))
+    );
   });
 
   flame.onStateUpdate("jump", async () => {
