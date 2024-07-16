@@ -92,13 +92,38 @@ async function gameSetup() {
         console.warn(`
 
           kirb.pos.y: `, kirb.pos.y, `
+          kirb.pos.x: `, kirb.pos.x, `
+          kirb.pos.y / 1.52: `, kirb.pos.y / 1.52, `
+          Math.max((kirb.pos.y / 1.52) + 60), 300): `, Math.max((kirb.pos.y / 1.52) + 60, 300), `
           level1Layout.pos: `, level1Layout.pos, `
           level1Layout.width: `, level1Layout.width, `
+          Math.min(
+            Math.max(
+              (kirb.pos.y / 1.52) + 60,
+              400,
+            ),
+            680,
+          ): `, Math.min(
+            Math.max(
+              (kirb.pos.y / 1.52) + 60,
+              400,
+            ),
+            735,
+          ), `
 
         `)
       }
-      if (kirb.pos.y < 750 || kirb.pos.x < 1000) {
-        k.camPos(kirb.pos.x + 200, (kirb.pos.y / 1.42) + 200);
+      if (kirb.pos.y > 850 || kirb.pos.x < 1440) {
+        k.camPos(
+          Math.min(Math.max(kirb.pos.x, 700), 1232),
+          Math.min(
+            Math.max(
+              (kirb.pos.y / 1.52) + 60,
+              400,
+            ),
+            735,
+          )
+        );
       }
     });
 
